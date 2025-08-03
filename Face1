@@ -426,19 +426,23 @@ local isChasing = false
 local chaseTween
 
 -- Hàm đuổi theo player bằng tween
+-- Hàm đuổi theo người chơi bằng tween (sửa lại như bạn yêu cầu)
 local function chasePlayer()
 	if not entity.Model or not entity.Model:FindFirstChild("HumanoidRootPart") then return end
+
+	local camera = workspace.CurrentCamera
 	local entityRoot = entity.Model.HumanoidRootPart
-	local distance = (entityRoot.Position - rootPart.Position).Magnitude
-	local chaseTime = distance / 15
+	local humanoidRootPart = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then return end
 
-	-- Hủy tween cũ nếu có
+	local targetPosition = humanoidRootPart.Position + humanoidRootPart.CFrame.LookVector * 4
+	local moveTweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear)
+	local moveTweenGoal = {
+		CFrame = CFrame.new(targetPosition, camera.CFrame.Position)
+	}
+
 	if chaseTween then chaseTween:Cancel() end
-
-	-- Tạo tween mới đuổi theo player
-	chaseTween = TweenService:Create(entityRoot, TweenInfo.new(chaseTime, Enum.EasingStyle.Linear), {
-		Position = rootPart.Position
-	})
+	chaseTween = TweenService:Create(entityRoot, moveTweenInfo, moveTweenGoal)
 	chaseTween:Play()
 end
 
