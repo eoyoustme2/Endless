@@ -40,7 +40,7 @@ local entity = spawner.Create({
 	},
 	Damage = {
 		Enabled = true,
-		Range = 2,
+		Range = 40,
 		Amount = 40
 	},
 	Crucifixion = {
@@ -172,7 +172,7 @@ task.spawn(function()
 	while JumpscareGui.Parent do
 		Overlay.Image = overlayImages[i]
 		i = i % #overlayImages + 1
-		task.wait(0.2)
+		task.wait(0.02)
 	end
 end)
 
@@ -325,7 +325,7 @@ task.spawn(function()
 	while JumpscareGui.Parent do
 		Overlay.Image = overlayImages[i]
 		i = i % #overlayImages + 1
-		task.wait(0.2)
+		task.wait(0.02)
 	end
 end)
 
