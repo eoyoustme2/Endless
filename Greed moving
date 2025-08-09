@@ -99,105 +99,147 @@ entity:SetCallback("OnDespawned", function()
 end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player")
+local player = game.Players.LocalPlayer
+	local playerGui = player:WaitForChild("PlayerGui")
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local camera = workspace.CurrentCamera
 
-  local TweenService = game:GetService("TweenService")
+	-- Bắt đầu Jumpscare nếu player chết
+	if newHealth <= 0 then
+		local screenGui = Instance.new("ScreenGui")
+		screenGui.Parent = playerGui
+		screenGui.Name = "ScreenGui"
+		screenGui.IgnoreGuiInset = true
 
-                    local JumpscareGui = Instance.new("ScreenGui")
-                    JumpscareGui.Name = "JumpscareGui"
-                    JumpscareGui.IgnoreGuiInset = true
-                    JumpscareGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-                    JumpscareGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+		local stopEffects = false
+		local doneFading = false
 
-                    local Background = Instance.new("Frame")
-                    Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
-                    Background.Size = UDim2.new(1, 0, 1, 0)
-                    Background.ZIndex = 999
-                    Background.Parent = JumpscareGui
+		-- Âm thanh jumpscare
+		local killSound = Instance.new("Sound")
+		killSound.Parent = workspace
+		killSound.PlaybackSpeed = 1
+		killSound.SoundId = "rbxassetid://18459521002"
+		killSound.Name = "Dear god death sound chat"
+		killSound.Volume = 10
+		killSound.Looped = true
 
-                    local Overlay = Instance.new("ImageLabel")
-                    Overlay.BackgroundTransparency = 1
-                    Overlay.Size = UDim2.new(1, 0, 1, 0)
-                    Overlay.Image = "rbxassetid://93477339710496"
-                    Overlay.ZIndex = 998
-                    Overlay.Parent = Background
+		-- Hiệu ứng âm thanh
+		Instance.new("FlangeSoundEffect", killSound).Rate = 0.2
+		Instance.new("TremoloSoundEffect", killSound).Frequency = 1
+		Instance.new("PitchShiftSoundEffect", killSound).Octave = 1
+		Instance.new("DistortionSoundEffect", killSound).Level = 0.2
 
-                    local Face = Instance.new("ImageLabel")
-                    Face.AnchorPoint = Vector2.new(0.5, 0.5)
-                    Face.BackgroundTransparency = 1
-                    Face.Position = UDim2.new(0.5, 0, 0.5, 0)
-                    Face.Size = UDim2.new(0, 300, 0, 150)
-                    Face.Image = "rbxassetid://16151234557"
-                    Face.ZIndex = 1000
-                    Face.Parent = Background
+		-- UI
+		local background = Instance.new("ImageLabel", screenGui)
+		background.Size = UDim2.new(1, 0, 1, 0)
+		background.Image = "rbxassetid://1712510813"
+		background.ImageTransparency = 0.5
+		background.BackgroundColor3 = Color3.new(0, 0, 0)
+		background.BackgroundTransparency = 0
 
-                    local scare = Instance.new("Sound")
-                    scare.SoundId = "rbxassetid://6754147732"
-                    scare.Volume = 10
-                    scare.Parent = JumpscareGui
-                    scare:Play()
+		local face = Instance.new("ImageLabel", screenGui)
+		face.AnchorPoint = Vector2.new(0.5, 0.5)
+		face.Position = UDim2.new(0.5, 0, 0.589, 0)
+		face.Size = UDim2.new(0, 30, 0, 30)
+		face.Image = "rbxassetid://11395249132"
+		face.BackgroundTransparency = 1
 
-                    task.spawn(function()
-                        while JumpscareGui.Parent do
-                            Background.BackgroundColor3 = Color3.fromRGB(3, 25, 99)
-                            task.wait(math.random(25, 100) / 1000)
-                            Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                            task.wait(math.random(25, 100) / 1000)
-                        end
-                    end)
+		local text = Instance.new("ImageLabel", screenGui)
+		text.AnchorPoint = Vector2.new(0.5, 0.5)
+		text.Position = UDim2.new(0.5, 0, 0.5, 0)
+		text.Size = UDim2.new(0, 150, 0, 150)
+		text.Image = "rbxassetid://99132041298170"
+		text.BackgroundTransparency = 1
 
-                    local overlayImages = {
-                        "rbxassetid://93477339710496",
-                        "rbxassetid://82216621528642"
-                    }
-                    task.spawn(function()
-                        local i = 1
-                        while JumpscareGui.Parent do
-                            Overlay.Image = overlayImages[i]
-                            i = i % #overlayImages + 1
-                            task.wait(0.07)
-                        end
-                    end)
+		killSound:Play()
 
-                    local function tweenTo(object, props, time)
-                        local tween = TweenService:Create(object, TweenInfo.new(time, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), props)
-                        tween:Play()
-                        return tween
-                    end
+		-- Camera zoom
+		local startFov = camera.FieldOfView
+		local zoomFov = 60
+		local zoomDuration = 0.7
 
-                    local function getRandomNearCenterPosition()
-                        local offsetX = (math.random(-6, 6) / 100)
-                        local offsetY = (math.random(-6, 6) / 100)
-                        if math.abs(offsetX) < 0.01 then
-                            offsetX = 0.015 * (math.random(0, 1) == 0 and -1 or 1)
-                        end
-                        if math.abs(offsetY) < 0.01 then
-                            offsetY = 0.015 * (math.random(0, 1) == 0 and -1 or 1)
-                        end
-                        return UDim2.new(0.5 + offsetX, 0, 0.5 + offsetY, 0)
-                    end
+		camera.CameraType = Enum.CameraType.Scriptable
+		game:GetService("TweenService"):Create(camera, TweenInfo.new(zoomDuration), {FieldOfView = zoomFov}):Play()
 
-                    local duration = 1
-                    local enlargeTween = tweenTo(Face, {
-                        Size = UDim2.new(3, 0, 2.5, 0),
-                        ImageTransparency = 0,
-                    }, duration)
+		game:GetService("TweenService"):Create(face, TweenInfo.new(zoomDuration), {
+			Size = UDim2.new(0, 1200, 0, 1200),
+			Position = UDim2.new(0.5, 0, 0.5, 0)
+		}):Play()
 
-                    local startTime = tick()
-                    while tick() - startTime < duration do
-                        Face.Position = getRandomNearCenterPosition()
-                        task.wait(0.05)
-                    end
-                    enlargeTween.Completed:Wait()
+		-- Jumpscare Effects
+		task.spawn(function()
+			while not stopEffects do
+				background.ImageTransparency = 0.3
+				background.BackgroundTransparency = 0
+				task.wait(0.1)
+				background.ImageTransparency = 0
+				background.BackgroundTransparency = 0.3
+				task.wait(0.1)
+			end
+		end)
 
-                    tweenTo(Face, {
-                        Size = UDim2.new(0.1, 0, 0.1, 0),
-                        Position = UDim2.new(0.5, 0, 0.5, 0)
-                    }, 0.1)
+		task.spawn(function()
+			while not stopEffects do
+				background.Image = "rbxassetid://131073231978514"
+				task.wait(0.0589)
+				background.Image = "rbxassetid://105841646930424"
+				task.wait(0.0589)
+			end
+		end)
 
-                    task.delay(1.5, function()
-                        JumpscareGui:Destroy()
+		task.spawn(function()
+			while not stopEffects do
+				face.Rotation = 30
+				face.Image = "rbxassetid://11164589473"
+				task.wait(0.0589)
+				face.Rotation = -30
+				task.wait(0.0589)
+			end
+		end)
+
+		task.spawn(function()
+			while not stopEffects do
+				text.Image = "rbxassetid://88490592395124"
+				task.wait(0.0589)
+				text.Image = "rbxassetid://99132041298170"
+				task.wait(0.0589)
+			end
+		end)
+
+		task.spawn(function()
+			while not stopEffects do
+				text.Position = UDim2.new(math.random(), 0, math.random(), 0)
+				task.wait(0.05)
+			end
+		end)
+
+		task.spawn(function()
+			while not stopEffects do
+				text.ImageTransparency = 0
+				task.wait(0.1)
+				text.ImageTransparency = 1
+				task.wait(0.1)
+			end
+		end)
+
+		-- Đợi và fade out
+		task.wait(zoomDuration)
+		stopEffects = true
+		killSound:Stop()
+
+		task.spawn(function()
+			while not doneFading do
+				face.ImageTransparency = math.min(face.ImageTransparency + 0.1, 1)
+				text.ImageTransparency = math.min(text.ImageTransparency + 0.1, 1)
+				background.ImageTransparency = math.min(background.ImageTransparency + 0.1, 1)
+				background.BackgroundTransparency = math.min(background.BackgroundTransparency + 0.1, 1)
+				if face.ImageTransparency >= 1 then
+					doneFading = true
+				end
+				task.wait(0.05)
+			end
+			screenGui:Destroy()
                     end)
 	else
 		print("Entity has damaged the player")
