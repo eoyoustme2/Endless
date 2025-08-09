@@ -8,7 +8,7 @@ local entity = spawner.Create({
 	Entity = {
 		Name = "Greed",
 		Asset = "rbxassetid://74778789796562",
-		HeightOffset = 0
+		HeightOffset = 1
 	},
 	Lights = {
 		Flicker = {
@@ -51,7 +51,7 @@ local entity = spawner.Create({
 	},
 	Death = {
 		Type = "Guiding", -- "Curious"
-		Hints = {"Death", "Hints", "Go", "Here"},
+		Hints = {"you die to greed", "greed 1 after dispawnned", "greed 2 will spawn", "good luck"},
 		Cause = ""
 	}
 })
